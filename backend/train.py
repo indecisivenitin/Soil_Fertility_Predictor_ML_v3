@@ -55,18 +55,9 @@ for name, model in models.items():
         best_name = name
 
 # Save the best model
+# Save the best model
 joblib.dump(best_model, MODEL_PATH)
-print(f"\nBEST MODEL: {best_name} → R² = {best_score:.4f}")
-print(f"Model saved successfully → {MODEL_PATH}")
 
-# Optional: save results
-results_path = os.path.join(BASE_DIR, "model_results.txt")
-with open(results_path, "w") as f:
-    f.write(f"Best Model: {best_name}\nR² Score: {best_score:.4f}\n\nAll Results:\n")
-    for name, score in models.items():
-        pred = model.predict(X_test) if name != best_name else None  # skip re-predict
-        try:
-            s = r2_score(y_test, model.predict(X_test))
-            f.write(f"{name}: {s:.4f}\n")
-        except:
-            pass
+print(f"\nBEST MODEL: {best_name} → R² = {best_score:.4f}")
+print(f"Model saved successfully at: {MODEL_PATH}")
+print("Training completed! App ready to predict.")
