@@ -6,23 +6,33 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
-from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.metrics import r2_score
 import joblib
 import os
 
-# Load data
-df = pd.read_csv("../data/processed_data_set.csv")
+# ——— SMART PATH: works locally AND on Render ———
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(BASE_DIR, "data", "processed_data_set.csv")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+MODEL_PATH = os.path.join(MODEL_DIR, "best_soil_model.pkl")
+
+# Create models folder if not exists
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+print("Loading dataset...")
+df = pd.read_csv(DATA_PATH)
 
 # Features & target
 X = df.drop("Vegetation Cover", axis=1)
 y = df["Vegetation Cover"]
 
-# Train-test split
+# Split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Try multiple models
+# Models
 models = {
-"RandomForest": RandomForestRegressor(n_estimators=300, random_state=42),    "XGBoost": XGBRegressor(n_estimators=300, learning_rate=0.1, random_state=42),
+    "RandomForest": RandomForestRegressor(n_estimators=300, random_state=42),
+    "XGBoost": XGBRegressor(n_estimators=300, learning_rate=0.1, random_state=42),
     "GradientBoosting": GradientBoostingRegressor(n_estimators=300, random_state=42),
     "LinearRegression": LinearRegression(),
     "SVR": SVR(kernel='rbf')
@@ -30,14 +40,13 @@ models = {
 
 best_model = None
 best_score = 0
-results = {}
+best_name = ""
 
 print("Training models...")
 for name, model in models.items():
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     score = r2_score(y_test, pred)
-    results[name] = score
     print(f"{name}: R² = {score:.4f}")
     
     if score > best_score:
@@ -45,14 +54,19 @@ for name, model in models.items():
         best_model = model
         best_name = name
 
-# Save best model
-os.makedirs("/opt/render/project/src/models", exist_ok=True)
-joblib.dump(best_model, "/opt/render/project/src/models/best_soil_model.pkl")
-print(f"\nBest model: {best_name} with R² = {best_score:.4f}")
-print("Model saved as models/best_soil_model.pkl")
+# Save the best model
+joblib.dump(best_model, MODEL_PATH)
+print(f"\nBEST MODEL: {best_name} → R² = {best_score:.4f}")
+print(f"Model saved successfully → {MODEL_PATH}")
 
-# Save results for README
-with open("../model_results.txt", "w") as f:
+# Optional: save results
+results_path = os.path.join(BASE_DIR, "model_results.txt")
+with open(results_path, "w") as f:
     f.write(f"Best Model: {best_name}\nR² Score: {best_score:.4f}\n\nAll Results:\n")
-    for n, s in results.items():
-        f.write(f"{n}: {s:.4f}\n")
+    for name, score in models.items():
+        pred = model.predict(X_test) if name != best_name else None  # skip re-predict
+        try:
+            s = r2_score(y_test, model.predict(X_test))
+            f.write(f"{name}: {s:.4f}\n")
+        except:
+            pass
