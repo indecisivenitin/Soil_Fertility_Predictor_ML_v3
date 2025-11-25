@@ -12,9 +12,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 # ==================== CORRECT PATHS FOR RENDER & LOCAL ====================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))        # /backend
 ROOT_DIR = os.path.dirname(BASE_DIR)                          # project root
-MODEL_PATH = os.path.join(ROOT_DIR, "models", "best_soil_model.pkl")
+MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "best_soil_model.pkl")
 
-app = Flask(__name__, template_folder=os.path.join(ROOT_DIR, "templates"))
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 
 # Load model
 try:
